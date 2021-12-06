@@ -2,7 +2,7 @@ int solveA(List<String> input) {
   final numberOfBitsInRow = input.first.length;
   final inputLengthDividedByTwo = input.length ~/ 2;
 
-  // Generate a sumList which contains number of "1" bits
+  // Strategy is to first generate a sumList which contains number of "1" bits
   // for each position. Then we check if the number of bits in a column is the
   // majority by checking if we have counted more bits than the half of the
   // input size.
@@ -26,7 +26,7 @@ int solveA(List<String> input) {
         (gammaRate << 1) ^ (sumBit > inputLengthDividedByTwo ? 1 : 0),
   );
 
-  // Epsilon rate are the inverse of gamma rate
+  // Epsilon rate are the bitwise inverse of gamma rate
   final mask = ~((~0) << numberOfBitsInRow);
   final epsilonRate = (gammaRate & ~mask) | (~gammaRate & mask);
 
@@ -34,8 +34,8 @@ int solveA(List<String> input) {
 }
 
 int solveB(List<String> input) =>
-    calculateRating(input: input, keepOneBitList: oxygenGeneratorRatingRule) *
-    calculateRating(input: input, keepOneBitList: co2ScrubberRatingRule);
+    calculateRating(input, keepOneBitList: oxygenGeneratorRatingRule) *
+    calculateRating(input, keepOneBitList: co2ScrubberRatingRule);
 
 bool oxygenGeneratorRatingRule(int zeroBitLength, int oneBitLength) =>
     oneBitLength >= zeroBitLength;
@@ -43,45 +43,32 @@ bool oxygenGeneratorRatingRule(int zeroBitLength, int oneBitLength) =>
 bool co2ScrubberRatingRule(int zeroBitLength, int oneBitLength) =>
     oneBitLength < zeroBitLength;
 
-int calculateRating({
-  required List<String> input,
+int calculateRating(
+  List<String> input, {
   required bool Function(int zeroBitLength, int oneBitLength) keepOneBitList,
 }) {
   final numberOfBitsInRow = input.first.length;
   var list = input;
 
   for (var bit = 0; bit < numberOfBitsInRow && list.length > 1; bit++) {
-    final split = SplitByBit(list, checkBit: bit);
+    final List<String> zeroBitList = [];
+    final List<String> oneBitList = [];
 
-    if (keepOneBitList(split.zeroBitList.length, split.oneBitList.length)) {
-      list = split.oneBitList;
-    } else {
-      list = split.zeroBitList;
-    }
-  }
-
-  return int.parse(list.first, radix: 2);
-}
-
-class SplitByBit {
-  final List<String> zeroBitList;
-  final List<String> oneBitList;
-
-  factory SplitByBit(List<String> input, {required int checkBit}) {
-    final zeroBitList = <String>[];
-    final oneBitList = <String>[];
-
-    for (final line in input) {
+    for (final line in list) {
       // 49 = ASCII value for the char "1"
-      if (line.codeUnits[checkBit] == 49) {
+      if (line.codeUnits[bit] == 49) {
         oneBitList.add(line);
       } else {
         zeroBitList.add(line);
       }
     }
 
-    return SplitByBit._(zeroBitList, oneBitList);
+    if (keepOneBitList(zeroBitList.length, oneBitList.length)) {
+      list = oneBitList;
+    } else {
+      list = zeroBitList;
+    }
   }
 
-  const SplitByBit._(this.zeroBitList, this.oneBitList);
+  return int.parse(list.first, radix: 2);
 }
